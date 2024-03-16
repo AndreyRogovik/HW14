@@ -22,47 +22,46 @@ def token(client, user, session, monkeypatch):
     return data["access_token"]
 
 
-# def test_create_contact(client, token):
-#     with patch.object(auth_service, 'r') as r_mock:
-#         r_mock.get.return_value = None
-#         response = client.post(
-#             "/api/contacts",
-#             json={
-#                 "first_name": "Rokky",
-#                 "last_name": "Balboa",
-#                 "email": "Roky@Balboa.com",
-#                 "phone": "+14155552671",
-#                 "birthday": "1950-01-01",
-#                 "addtitional_data": "Boxer"
-#             },
-#             headers={"Authorization": f"Bearer {token}"}
-#         )
-#         assert response.status_code == 201, response.text
-#         data = response.json()
-#         assert data["first_name"] == "Rokky"
-#         assert "id" in data
+def test_create_contact(client, token):
+    response = client.post(
+        "/api/contacts",
+        json={
+            "first_name": "Rokky",
+            "last_name": "Balboa",
+            "email": "Roky@Balboa.com",
+            "phone": "+14155552671",
+            "birthday": "1950-01-01",
+            "additional_data": "Boxer"
+        },
+        headers={"Authorization": f"Bearer {token}"}
+    )
+    assert response.status_code == 201, response.text
+    data = response.json()
+    assert data["first_name"] == "Rokky"
+    assert "id" in data
 
 
 def test_get_contacts(client, token):
-    with patch.object(auth_service, 'r') as r_mock:
-        r_mock.get.return_value = None
-        response = client.get(
-            "/api/contacts",
-            headers={"Authorization": f"Bearer {token}"}
-        )
-        assert response.status_code == 200, response.text
-        data = response.json()
-        assert type(data) == list
-        assert len(data) == 1
-        assert "id" in data[0]
-    #
-#
-# def test_get_contact(client, contact):
-#     response = client.get("/api/contacts/1")
-#     assert response.status_code == 200, response.text
-#     data = response.json()
-#     assert data["first_name"] == contact.get("first_name")
-#     assert "id" in data
+    response = client.get(
+        "/api/contacts",
+        headers={"Authorization": f"Bearer {token}"}
+    )
+    assert response.status_code == 200, response.text
+    data = response.json()
+    assert type(data) == list
+    assert len(data) == 1
+    assert "id" in data[0]
+
+
+def test_get_contact(client, contact):
+    response = client.get(
+        "/api/contacts/1",
+        headers={"Authorization": f"Bearer {token}"}
+    )
+    assert response.status_code == 200, response.text
+    data = response.json()
+    assert data["first_name"] == contact.get("first_name")
+    assert "id" in data
 #
 #
 # def test_get_contact_not_found(client):
