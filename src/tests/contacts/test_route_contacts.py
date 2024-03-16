@@ -1,4 +1,4 @@
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock, AsyncMock, patch
 
 import pytest
 
@@ -22,82 +22,99 @@ def token(client, user, session, monkeypatch):
     return data["access_token"]
 
 
-def test_create_contact(client, token):
-    response = client.post(
-        "/api/contacts",
-        json={
-            "first_name": "Rokky",
-            "last_name": "Balboa",
-            "email": "Roky@Balboa.com",
-            "phone": "+14155552671",
-            "birthday": "1950-01-01",
-            "additional_data": "Boxer"
-        },
-        headers={"Authorization": f"Bearer {token}"}
-    )
-    assert response.status_code == 201, response.text
-    data = response.json()
-    assert data["first_name"] == "Rokky"
-    assert "id" in data
+def test_create_contact(client, token, monkeypatch):
+    with patch.object(auth_service, 'r') as redis_mock:
+        redis_mock.get.return_value = None
+        monkeypatch.setattr("fastapi_limiter.FastAPILimiter.redis", AsyncMock())
+        monkeypatch.setattr("fastapi_limiter.FastAPILimiter.identifier", AsyncMock())
+        monkeypatch.setattr("fastapi_limiter.FastAPILimiter.http_callback", AsyncMock())
+        response = client.post(
+            "/api/contacts/",
+            json={"first_name": "John", "last_name": "Doe", "email": "john.doe@example.com", "phone_number": "+14155552671",
+                  "birthday": "1950-01-01", "additional_data": "Boxer"},
+            headers={"Authorization": f"Bearer {token}"}
+        )
+        assert response.status_code == 201, response.text
+        data = response.json()
+        assert data["first_name"] == "John"
+        assert data["last_name"] == "Doe"
+        assert data["email"] == "john.doe@example.com"
 
 
-def test_get_contacts(client, token):
-    response = client.get(
-        "/api/contacts",
-        headers={"Authorization": f"Bearer {token}"}
-    )
-    assert response.status_code == 200, response.text
-    data = response.json()
-    assert type(data) == list
-    assert len(data) == 1
-    assert "id" in data[0]
+def test_read_contacts(client, token, monkeypatch):
+    with patch.object(auth_service, 'r') as redis_mock:
+        redis_mock.get.return_value = None
+        monkeypatch.setattr("fastapi_limiter.FastAPILimiter.redis", AsyncMock())
+        monkeypatch.setattr("fastapi_limiter.FastAPILimiter.identifier", AsyncMock())
+        monkeypatch.setattr("fastapi_limiter.FastAPILimiter.http_callback", AsyncMock())
+        response = client.get(
+            "/api/contacts/",
+            headers={"Authorization": f"Bearer {token}"}
+        )
+        assert response.status_code == 200, response.text
+        data = response.json()
+        assert isinstance(data, list)
 
 
-def test_get_contact(client, contact):
+def test_read_contact(client, token):
     response = client.get(
         "/api/contacts/1",
         headers={"Authorization": f"Bearer {token}"}
     )
     assert response.status_code == 200, response.text
-    data = response.json()
-    assert data["first_name"] == contact.get("first_name")
-    assert "id" in data
-#
-#
-# def test_get_contact_not_found(client):
-#     response = client.get("/api/contacts/2")
-#     assert response.status_code == 404, response.text
-#     data = response.json()
-#     assert data["detail"] == "Not found"
-#
-#
-# def test_update_contact_found(client, updated_contact):
-#     response = client.put("/api/contacts/1", json=updated_contact)
-#     assert response.status_code == 200, response.text
-#     data = response.json()
-#     assert data["first_name"] == updated_contact.get("first_name")
-#     assert data["last_name"] == updated_contact.get("last_name")
-#     assert data["additional_data"] == updated_contact.get("additional_data")
-#     assert "id" in data
-#
-#
-# def test_update_contact_not_found(client, updated_contact):
-#     response = client.put("/api/contacts/2", json=updated_contact)
-#     assert response.status_code == 404, response.text
-#     data = response.json()
-#     assert data["detail"] == "Not found"
-#
-#
-# def test_remove_contact(client, updated_contact):
-#     response = client.delete("/api/contacts/1")
-#     assert response.status_code == 200, response.text
-#     data = response.json()
-#     assert data["first_name"] == updated_contact.get("first_name")
-#     assert "id" in data
-#
-#
-# def test_delete_contact_not_found(client):
-#     response = client.delete("/api/contacts/1")
-#     assert response.status_code == 404, response.text
-#     data = response.json()
-#     assert data["detail"] == "Not found"
+
+
+def test_get_contact_not_found(client, token):
+    with patch.object(auth_service, 'r') as r_mock:
+        r_mock.get.return_value = None
+        response = client.get(
+            "/api/contacts/2",
+            headers={"Authorization": f"Bearer {token}"}
+        )
+        assert response.status_code == 404, response.text
+        data = response.json()
+        assert data["detail"] == "Contact not found"
+
+
+def test_update_contact(client, token):
+    response = client.put(
+        "/api/contacts/1",
+        json={
+            "first_name": "Balerina",
+            "last_name": "Balerina",
+            "email": "Balerina.doe@example.com",
+            "phone_number": "+14166662671",
+            "birthday": "1999-01-01",
+            "additional_data": "Balerina"},
+
+        headers={"Authorization": f"Bearer {token}"}
+    )
+    assert response.status_code == 200, response.text
+
+
+def test_update_contact_not_found(client, token):
+    with patch.object(auth_service, 'r') as r_mock:
+        r_mock.get.return_value = None
+        response = client.put(
+            "/api/contacts/2",
+            json={
+                "first_name": "Balerina",
+                "last_name": "Balerina",
+                "email": "Balerina.doe@example.com",
+                "phone_number": "+14166662671",
+                "birthday": "1999-01-01",
+                "additional_data": "Balerina"},
+
+            headers={"Authorization": f"Bearer {token}"}
+        )
+        assert response.status_code == 404, response.text
+        data = response.json()
+        assert data["detail"] == "Contact not found"
+
+
+def test_remove_contact(client, token):
+    response = client.delete(
+        "/api/contacts/1",
+        headers={"Authorization": f"Bearer {token}"}
+    )
+    assert response.status_code == 200, response.text

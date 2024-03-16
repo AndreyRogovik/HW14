@@ -85,7 +85,7 @@ async def update_note(body: NoteUpdate, note_id: int, db: Session = Depends(get_
     :param db: Session: Pass the database session to the function
     :param current_user: User: Get the user who is currently logged in
     :return: A note object
-    :doc-author: Trelent
+    :doc-author: AR
     """
     note = await repository_notes.update_note(note_id, body, current_user, db)
     if note is None:

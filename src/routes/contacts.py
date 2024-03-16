@@ -32,7 +32,7 @@ async def read_contacts(skip: int = 0, limit: int = 100, db: Session = Depends(g
 
 
 @router.get("/{contact_id}", response_model=ContactResponse)
-async def read_note(contact_id: int, db: Session = Depends(get_db),
+async def read_contact(contact_id: int, db: Session = Depends(get_db),
                     current_user: User = Depends(auth_service.get_current_user)):
 
     """
